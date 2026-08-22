@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/formal-you/validation-gen/pkg/valerr"
+	"github.com/formal-you/validation-gen/pkg/errorx"
 )
 
 type loginRequest struct {
@@ -27,8 +27,8 @@ type crossRequest struct {
 	ConfirmPassword string `json:"confirm_password" validate:"eqfield=Password"`
 }
 
-func collect(err error) []valerr.FieldError {
-	return valerr.CollectFieldErrors(err)
+func collect(err error) []errorx.FieldError {
+	return errorx.CollectFieldErrors(err)
 }
 
 func TestValidateBuiltinRules(t *testing.T) {
@@ -43,7 +43,7 @@ func TestValidateBuiltinRules(t *testing.T) {
 		req := &loginRequest{Email: "bad", Password: "short"}
 		err := Validate(context.Background(), nil, req)
 		got := collect(err)
-		want := []valerr.FieldError{
+		want := []errorx.FieldError{
 			{Field: "email", Code: "email"},
 			{Field: "password", Code: "min"},
 		}
@@ -56,7 +56,7 @@ func TestValidateBuiltinRules(t *testing.T) {
 		req := &loginRequest{Email: "a@b.com", Password: "12345678", Code: "windows"}
 		err := Validate(context.Background(), nil, req)
 		got := collect(err)
-		want := []valerr.FieldError{{Field: "code", Code: "oneof"}}
+		want := []errorx.FieldError{{Field: "code", Code: "oneof"}}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %+v, want %+v", got, want)
 		}

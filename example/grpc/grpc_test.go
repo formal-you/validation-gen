@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/formal-you/validation-gen/example/dto"
-	"github.com/formal-you/validation-gen/pkg/valerr"
+	"github.com/formal-you/validation-gen/pkg/errorx"
 )
 
 func TestValidateRequest(t *testing.T) {
@@ -33,8 +33,8 @@ func TestValidateRequest(t *testing.T) {
 		if !strings.Contains(err.Error(), "id") || !strings.Contains(err.Error(), "required") {
 			t.Fatalf("错误消息应包含字段与规则信息: %v", err)
 		}
-		fields := valerr.CollectFieldErrors(req.Validate())
-		want := []valerr.FieldError{{Field: "id", Code: "required"}, {Field: "code", Code: "oneof"}}
+		fields := errorx.CollectFieldErrors(req.Validate())
+		want := []errorx.FieldError{{Field: "id", Code: "required"}, {Field: "code", Code: "oneof"}}
 		if !reflect.DeepEqual(fields, want) {
 			t.Fatalf("req.Validate() 错误 = %+v, want %+v", fields, want)
 		}

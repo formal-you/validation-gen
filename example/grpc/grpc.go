@@ -21,7 +21,7 @@ type Validator interface {
 }
 
 // ValidateRequest 校验 gRPC 请求，失败时返回 codes.InvalidArgument。
-// 错误消息仅用于日志与调试；结构化信息通过 valerr.CollectFieldErrors 获取。
+// 错误消息仅用于日志与调试；结构化信息通过 err.CollectFieldErrors 获取。
 func ValidateRequest(ctx context.Context, req Validator) error {
 	if err := req.Validate(); err != nil {
 		return status.Error(codes.InvalidArgument, err.Error())

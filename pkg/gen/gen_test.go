@@ -54,7 +54,7 @@ func TestGenerateBasic(t *testing.T) {
 		"func (x *User) Validate() error",
 		"var errs []error",
 		"return errors.Join(errs...)",
-		`&valerr.FieldError{Field: "name", Code: "required"}`,
+		`&errorx.FieldError{Field: "name", Code: "required"}`,
 		"check.Runes(string(x.Name)) < 3",
 		"if x.Email == nil",
 		"!check.Email(string(*x.Email))",
@@ -62,7 +62,7 @@ func TestGenerateBasic(t *testing.T) {
 		"int64(x.Age) < 0",
 		"!check.OneOfString(string(x.Role), \"admin\", \"user\")",
 		`"github.com/formal-you/validation-gen/pkg/check"`,
-		`"github.com/formal-you/validation-gen/pkg/valerr"`,
+		`"github.com/formal-you/validation-gen/pkg/errorx"`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("生成结果缺少 %q", want)
@@ -106,8 +106,8 @@ func TestGenerateNoRules(t *testing.T) {
 	if strings.Contains(out, "github.com/formal-you/validation-gen/pkg/check") {
 		t.Fatal("无规则类型不应导入 check")
 	}
-	if strings.Contains(out, "github.com/formal-you/validation-gen/pkg/valerr") {
-		t.Fatal("无规则类型不应导入 valerr")
+	if strings.Contains(out, "github.com/formal-you/validation-gen/pkg/errorx") {
+		t.Fatal("无规则类型不应导入 err")
 	}
 }
 

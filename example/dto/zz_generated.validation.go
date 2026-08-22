@@ -8,7 +8,7 @@ import (
 	"errors"
 
 	"github.com/formal-you/validation-gen/pkg/check"
-	"github.com/formal-you/validation-gen/pkg/valerr"
+	"github.com/formal-you/validation-gen/pkg/errorx"
 )
 
 // Validate 校验 CreateUserRequest 的静态规则（v1 白名单）。
@@ -17,36 +17,36 @@ import (
 func (x *CreateUserRequest) Validate() error {
 	var errs []error
 	if x.Name == "" {
-		errs = append(errs, &valerr.FieldError{Field: "name", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "name", Code: "required"})
 	} else if check.Runes(string(x.Name)) < 3 {
-		errs = append(errs, &valerr.FieldError{Field: "name", Code: "min"})
+		errs = append(errs, &errorx.FieldError{Field: "name", Code: "min"})
 	} else if check.Runes(string(x.Name)) > 20 {
-		errs = append(errs, &valerr.FieldError{Field: "name", Code: "max"})
+		errs = append(errs, &errorx.FieldError{Field: "name", Code: "max"})
 	}
 	if x.Email == nil {
 		// omitempty: 跳过剩余规则
 	} else if !check.Email(string(*x.Email)) {
-		errs = append(errs, &valerr.FieldError{Field: "email", Code: "email"})
+		errs = append(errs, &errorx.FieldError{Field: "email", Code: "email"})
 	}
 	if x.Age == 0 {
 		// omitempty: 跳过剩余规则
 	} else if int64(x.Age) < 0 {
-		errs = append(errs, &valerr.FieldError{Field: "age", Code: "gte"})
+		errs = append(errs, &errorx.FieldError{Field: "age", Code: "gte"})
 	} else if int64(x.Age) > 150 {
-		errs = append(errs, &valerr.FieldError{Field: "age", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "age", Code: "lte"})
 	}
 	if x.Role == "" {
 		// omitempty: 跳过剩余规则
 	} else if !check.OneOfString(string(x.Role), "admin", "user", "guest") {
-		errs = append(errs, &valerr.FieldError{Field: "role", Code: "oneof"})
+		errs = append(errs, &errorx.FieldError{Field: "role", Code: "oneof"})
 	}
 	if check.Runes(string(x.Nickname)) < 1 {
-		errs = append(errs, &valerr.FieldError{Field: "nickname", Code: "min"})
+		errs = append(errs, &errorx.FieldError{Field: "nickname", Code: "min"})
 	} else if check.Runes(string(x.Nickname)) > 30 {
-		errs = append(errs, &valerr.FieldError{Field: "nickname", Code: "max"})
+		errs = append(errs, &errorx.FieldError{Field: "nickname", Code: "max"})
 	}
 	if x.Active == false {
-		errs = append(errs, &valerr.FieldError{Field: "active", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "active", Code: "required"})
 	}
 	return errors.Join(errs...)
 }
@@ -61,48 +61,48 @@ func (x *CreateUserRequest) FillDefaults() {
 func (x *UserProfile) Validate() error {
 	var errs []error
 	if x.Username == "" {
-		errs = append(errs, &valerr.FieldError{Field: "username", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "username", Code: "required"})
 	} else if check.Runes(string(x.Username)) < 3 {
-		errs = append(errs, &valerr.FieldError{Field: "username", Code: "min"})
+		errs = append(errs, &errorx.FieldError{Field: "username", Code: "min"})
 	} else if check.Runes(string(x.Username)) > 16 {
-		errs = append(errs, &valerr.FieldError{Field: "username", Code: "max"})
+		errs = append(errs, &errorx.FieldError{Field: "username", Code: "max"})
 	}
 	if check.Runes(string(x.Bio)) > 200 {
-		errs = append(errs, &valerr.FieldError{Field: "bio", Code: "max"})
+		errs = append(errs, &errorx.FieldError{Field: "bio", Code: "max"})
 	}
 	if x.Weight == 0 {
 		// omitempty: 跳过剩余规则
 	} else if x.Weight <= 0 {
-		errs = append(errs, &valerr.FieldError{Field: "weight", Code: "gt"})
+		errs = append(errs, &errorx.FieldError{Field: "weight", Code: "gt"})
 	} else if x.Weight > 200 {
-		errs = append(errs, &valerr.FieldError{Field: "weight", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "weight", Code: "lte"})
 	}
 	if x.Level == 0 {
 		// omitempty: 跳过剩余规则
 	} else if uint64(x.Level) < 1 {
-		errs = append(errs, &valerr.FieldError{Field: "level", Code: "gte"})
+		errs = append(errs, &errorx.FieldError{Field: "level", Code: "gte"})
 	} else if uint64(x.Level) > 5 {
-		errs = append(errs, &valerr.FieldError{Field: "level", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "level", Code: "lte"})
 	}
 	if x.Avatar == nil {
 		// omitempty: 跳过剩余规则
 	} else if check.Runes(string(*x.Avatar)) != 10 {
-		errs = append(errs, &valerr.FieldError{Field: "avatar", Code: "len"})
+		errs = append(errs, &errorx.FieldError{Field: "avatar", Code: "len"})
 	}
 	if x.Handle == nil {
-		errs = append(errs, &valerr.FieldError{Field: "handle", Code: "min"})
+		errs = append(errs, &errorx.FieldError{Field: "handle", Code: "min"})
 	}
 	if x.Nick == nil {
-		errs = append(errs, &valerr.FieldError{Field: "nick", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "nick", Code: "required"})
 	} else if check.Runes(string(*x.Nick)) < 3 {
-		errs = append(errs, &valerr.FieldError{Field: "nick", Code: "min"})
+		errs = append(errs, &errorx.FieldError{Field: "nick", Code: "min"})
 	}
 	if x.Score == 0 {
 		// omitempty: 跳过剩余规则
 	} else if x.Score < 0 {
-		errs = append(errs, &valerr.FieldError{Field: "score", Code: "gte"})
+		errs = append(errs, &errorx.FieldError{Field: "score", Code: "gte"})
 	} else if x.Score > 100 {
-		errs = append(errs, &valerr.FieldError{Field: "score", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "score", Code: "lte"})
 	}
 	return errors.Join(errs...)
 }
@@ -117,26 +117,26 @@ func (x *UserProfile) FillDefaults() {
 func (x *Order) Validate() error {
 	var errs []error
 	if x.ID == 0 {
-		errs = append(errs, &valerr.FieldError{Field: "id", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "id", Code: "required"})
 	} else if int64(x.ID) <= 0 {
-		errs = append(errs, &valerr.FieldError{Field: "id", Code: "gt"})
+		errs = append(errs, &errorx.FieldError{Field: "id", Code: "gt"})
 	}
 	if x.Code == "" {
 		// omitempty: 跳过剩余规则
 	} else if !check.OneOfString(string(x.Code), "express", "normal") {
-		errs = append(errs, &valerr.FieldError{Field: "code", Code: "oneof"})
+		errs = append(errs, &errorx.FieldError{Field: "code", Code: "oneof"})
 	}
 	if x.Quantity == 0 {
 		// omitempty: 跳过剩余规则
 	} else if uint64(x.Quantity) <= 0 {
-		errs = append(errs, &valerr.FieldError{Field: "quantity", Code: "gt"})
+		errs = append(errs, &errorx.FieldError{Field: "quantity", Code: "gt"})
 	} else if uint64(x.Quantity) > 100 {
-		errs = append(errs, &valerr.FieldError{Field: "quantity", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "quantity", Code: "lte"})
 	}
 	if x.Note == "" {
 		// omitempty: 跳过剩余规则
 	} else if check.Runes(string(x.Note)) > 50 {
-		errs = append(errs, &valerr.FieldError{Field: "note", Code: "max"})
+		errs = append(errs, &errorx.FieldError{Field: "note", Code: "max"})
 	}
 	return errors.Join(errs...)
 }
@@ -151,30 +151,30 @@ func (x *Order) FillDefaults() {
 func (x *Settings) Validate() error {
 	var errs []error
 	if x.Role == "" {
-		errs = append(errs, &valerr.FieldError{Field: "role", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "role", Code: "required"})
 	}
 	if x.Page == 0 {
 		// omitempty: 跳过剩余规则
 	} else if int64(x.Page) < 1 {
-		errs = append(errs, &valerr.FieldError{Field: "page", Code: "gte"})
+		errs = append(errs, &errorx.FieldError{Field: "page", Code: "gte"})
 	}
 	if x.Ratio == 0 {
 		// omitempty: 跳过剩余规则
 	} else if x.Ratio < 0 {
-		errs = append(errs, &valerr.FieldError{Field: "ratio", Code: "gte"})
+		errs = append(errs, &errorx.FieldError{Field: "ratio", Code: "gte"})
 	} else if x.Ratio > 1 {
-		errs = append(errs, &valerr.FieldError{Field: "ratio", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "ratio", Code: "lte"})
 	}
 	if x.Flag == false {
-		errs = append(errs, &valerr.FieldError{Field: "flag", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "flag", Code: "required"})
 	}
 	if x.Count == 0 {
 		// omitempty: 跳过剩余规则
 	} else if uint64(x.Count) > 10 {
-		errs = append(errs, &valerr.FieldError{Field: "count", Code: "lte"})
+		errs = append(errs, &errorx.FieldError{Field: "count", Code: "lte"})
 	}
 	if check.Runes(string(x.Title)) > 10 {
-		errs = append(errs, &valerr.FieldError{Field: "title", Code: "max"})
+		errs = append(errs, &errorx.FieldError{Field: "title", Code: "max"})
 	}
 	return errors.Join(errs...)
 }
@@ -218,24 +218,24 @@ func (x *NoValidate) FillDefaults() {
 func (x *WebRequest) Validate() error {
 	var errs []error
 	if x.Username == "" {
-		errs = append(errs, &valerr.FieldError{Field: "username", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "username", Code: "required"})
 	} else if check.Runes(string(x.Username)) < 3 {
-		errs = append(errs, &valerr.FieldError{Field: "username", Code: "min"})
+		errs = append(errs, &errorx.FieldError{Field: "username", Code: "min"})
 	}
 	if x.Token == "" {
-		errs = append(errs, &valerr.FieldError{Field: "X-Token", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "X-Token", Code: "required"})
 	} else if check.Runes(string(x.Token)) != 10 {
-		errs = append(errs, &valerr.FieldError{Field: "X-Token", Code: "len"})
+		errs = append(errs, &errorx.FieldError{Field: "X-Token", Code: "len"})
 	}
 	if x.ID == 0 {
-		errs = append(errs, &valerr.FieldError{Field: "id", Code: "required"})
+		errs = append(errs, &errorx.FieldError{Field: "id", Code: "required"})
 	} else if int64(x.ID) <= 0 {
-		errs = append(errs, &valerr.FieldError{Field: "id", Code: "gt"})
+		errs = append(errs, &errorx.FieldError{Field: "id", Code: "gt"})
 	}
 	if x.Page == 0 {
 		// omitempty: 跳过剩余规则
 	} else if int64(x.Page) < 1 {
-		errs = append(errs, &valerr.FieldError{Field: "page", Code: "gte"})
+		errs = append(errs, &errorx.FieldError{Field: "page", Code: "gte"})
 	}
 	return errors.Join(errs...)
 }

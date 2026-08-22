@@ -15,6 +15,7 @@
 <p align="center">
   <a href="#user-content-quick-start">🚀 快速开始</a> ·
   <a href="#user-content-rules">🧩 规则白名单</a> ·
+  <a href="#user-content-runtime">🔌 runtime 兜底</a> ·
   <a href="#user-content-binding">🔗 绑定来源</a> ·
   <a href="#user-content-semantics">🧠 语义要点</a> ·
   <a href="#user-content-errors">🧨 错误模型</a> ·
@@ -52,7 +53,7 @@
 | ⚡ | **无反射执行** | 生成的 `Validate()` 是普通 Go 代码，可审查、可断点、零反射 |
 | 📜 | **生成结果稳定** | 多次生成无 diff，规则一目了然，AI/同事都能读 |
 | 🚫 | **生成期报错** | 不支持规则、非法组合直接失败，不静默忽略 |
-| 🔌 | **runtime 可扩展** | dive、跨字段、自定义 validator 显式走 `pkg/runtime` |
+| 🔌 | **runtime 可扩展** | dive、跨字段、自定义 validator 显式走 `go-playground/validator` |
 | 🔗 | **绑定来源无关** | json/form/query/header/uri/param 一套规则全覆盖 |
 | 🪞 | **静态/runtime 一致** | 对照测试逐字段、逐错误码验证语义与 validator/v10 一致 |
 | 🎛️ | **默认值** | `FillDefaults()` 幂等填充，`Validate()` 不修改接收对象 |
@@ -90,9 +91,9 @@ type CreateUserRequest struct {
 func (x *CreateUserRequest) Validate() error {
     var errs []error
     if x.Name == "" {
-        errs = append(errs, &valerr.FieldError{Field: "name", Code: "required"})
+        errs = append(errs, &errorx.FieldError{Field: "name", Code: "required"})
     } else if check.Runes(string(x.Name)) < 3 {
-        errs = append(errs, &valerr.FieldError{Field: "name", Code: "min"})
+        errs = append(errs, &errorx.FieldError{Field: "name", Code: "min"})
     }
     // ... 其余字段规则，全部是无反射的普通 if/else
     return errors.Join(errs...)
@@ -106,7 +107,7 @@ HTTP handler 校验失败返回：
 ```
 
 > [!NOTE]
-> 生成的代码只依赖标准库 `errors` 与公共包 `valerr`/`check`，不依赖反射；
+> 生成的代码只依赖标准库 `errors` 与公共包 `errorx`/`check`，不依赖反射；
 > 同一字段只报告 tag 顺序中第一个失败的规则，与 validator/v10 完全一致。
 
 ---
@@ -147,7 +148,7 @@ if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 }
 req.FillDefaults() // 幂等填充默认值，不覆盖非零值
 if err := req.Validate(); err != nil {
-    writeFieldErrors(w, http.StatusBadRequest, valerr.CollectFieldErrors(err))
+    writeFieldErrors(w, http.StatusBadRequest, errorx.CollectFieldErrors(err))
     return
 }
 ```
@@ -182,6 +183,55 @@ if err := req.Validate(); err != nil {
 
 ---
 
+## 🔌 runtime 兜底：静态规则不够用时显式使用 go-playground/validator
+
+v1 静态白名单是有边界的。需要 `dive`、跨字段（`eqfield`/`gtfield` 等）、条件规则
+（`required_if`/`required_with` 等）、自定义 validator、struct-level validator、alias
+或依赖外部服务的规则时，**生成期直接报错、绝不静默忽略**——这种场景显式走 runtime API：
+
+```go
+import (
+    "context"
+    "strings"
+
+    "github.com/go-playground/validator/v10"
+
+    "github.com/formal-you/validation-gen/pkg/errorx"
+    "github.com/formal-you/validation-gen/pkg/runtime"
+)
+
+v := validator.New()
+_ = v.RegisterValidation("is-upper", func(fl validator.FieldLevel) bool {
+    s := fl.Field().String()
+    return s != "" && s == strings.ToUpper(s)
+})
+
+type upperReq struct {
+    Name string `json:"name" validate:"required,is-upper"`
+}
+
+err := runtime.Validate(context.Background(), v, &upperReq{Name: "abc"})
+if err != nil {
+    // 结构化错误与静态校验同构：字段路径已映射为 JSON 名称
+    fields := errorx.CollectFieldErrors(err) // [{Field: "name", Code: "is-upper"}]
+}
+```
+
+`runtime.Validate(ctx, v, value)` 三个要点：
+
+| 参数/行为 | 说明 |
+| --- | --- |
+| `v == nil` | 创建一次性实例，每次调用独立，不共享全局状态 |
+| 传入自定义实例 | 调用方已有的 `RegisterValidation` / `RegisterAlias` / `StructCtx` 配置保持不变，本包不修改传入实例 |
+| 返回值 | 校验失败为 `errors.Join` 聚合的 `*FieldError`，用 `errorx.CollectFieldErrors` 还原；非校验错误（如 `InvalidValidationError`）原样返回 |
+
+> [!IMPORTANT]
+> 静态 `Validate()` 与 `runtime.Validate` 是两条**显式**路径：白名单内用生成代码（无反射、可审查），
+> 白名单外统一走 runtime，绝不在生成代码里悄悄扩规则。两者错误模型与字段路径语义一致，
+> 需要切换时只改一行调用。
+
+---
+
 ## 🔗 绑定来源无关
 
 字段来自 JSON、form 表单、query、header 或 URI 路径参数，都可以使用同样的规则：
@@ -207,7 +257,7 @@ req.ID, _ = strconv.ParseInt(r.PathValue("id"), 10, 64)
 req.Page, _ = strconv.Atoi(r.URL.Query().Get("page"))
 req.FillDefaults()
 if err := req.Validate(); err != nil {
-    writeFieldErrors(w, http.StatusBadRequest, valerr.CollectFieldErrors(err))
+    writeFieldErrors(w, http.StatusBadRequest, errorx.CollectFieldErrors(err))
     return
 }
 ```
@@ -242,7 +292,7 @@ gin/echo 等框架用对应绑定 tag（`form`/`header`/`uri`/`query`/`param`）
 ### 🔗 5. 错误路径按绑定 tag 解析
 
 优先级 `json` > `form` > `query` > `header` > `uri` > `param` > Go 字段名，
-静态生成与 runtime adapter 共用 `valerr.FieldName`，保证两侧错误路径一致
+静态生成与 runtime adapter 共用 `err.FieldName`，保证两侧错误路径一致
 （例如 `header:"X-Token"` 的字段错误路径是 `X-Token`）。
 
 ---
@@ -276,7 +326,7 @@ validation-gen/
 ├── 🛠️ cmd/valgen/             # CLI：-type 可重复，-output 默认 zz_generated.validation.go
 ├── 🧩 pkg/ir/                 # 规则 IR（解析器与生成器的稳定契约）
 ├── 🔎 pkg/parser/             # tag 解析、类型检查、规则约束
-├── 🧨 pkg/valerr/             # FieldError / CollectFieldErrors / FieldName
+├── 🧨 pkg/errorx/             # FieldError / CollectFieldErrors / FieldName
 ├── 🧰 pkg/check/              # 纯校验 helper（email、UTF-8 长度、oneof）
 ├── ⚙️ pkg/gen/                # 代码生成与原子写入（失败不覆盖已有文件）
 ├── 🔌 pkg/runtime/            # runtime adapter（validator/v10 StructCtx）

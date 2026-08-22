@@ -15,8 +15,8 @@ import (
 
 	"k8s.io/gengo/v2/types"
 
+	"github.com/formal-you/validation-gen/pkg/errorx"
 	"github.com/formal-you/validation-gen/pkg/ir"
-	"github.com/formal-you/validation-gen/pkg/valerr"
 )
 
 // supportedRules 是 v1 静态生成支持的规则白名单。
@@ -145,10 +145,10 @@ func ParseField(pkgName, typeName string, m types.Member) (ir.FieldRules, bool, 
 // FieldName 返回字段对外使用的名称（错误路径）。
 //
 // 优先级：json > form > query > header > uri > param > Go 字段名；
-// 与 runtime adapter 共用 valerr.FieldName，保证静态与运行时错误路径一致。
+// 与 runtime adapter 共用 err.FieldName，保证静态与运行时错误路径一致。
 // `json:"-"`（或其他绑定 tag 为 "-"）返回 "-"。
 func FieldName(m types.Member) string {
-	return valerr.FieldName(structTag(m.Tags), m.Name)
+	return errorx.FieldName(structTag(m.Tags), m.Name)
 }
 
 // ResolveKind 把 gengo 类型解析为 v1 支持的标量类型族。

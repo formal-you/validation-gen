@@ -21,7 +21,7 @@ cmd/valgen/          CLI（-type 可重复，-output 默认 zz_generated.validat
 pkg/ir/              规则 IR（Rule / FieldRules / Default）
 pkg/parser/          validate/default/json tag 解析、类型检查、规则约束
 pkg/check/           纯校验 helper（email regex、UTF-8 长度）
-pkg/valerr/          公共错误模型（FieldError / CollectFieldErrors）
+pkg/errorx/          公共错误模型（FieldError / CollectFieldErrors）
 pkg/gen/             代码生成（渲染 Validate/FillDefaults、gofmt、原子写入）
 pkg/runtime/         runtime adapter（validator/v10 StructCtx + JSON 字段名映射）
 example/dto/         DTO 示例 + go:generate + 静态/运行时一致性测试
@@ -44,7 +44,7 @@ docs/                spec / issue / goal / pr
 ## 实施顺序（对应 Issue 1-5）
 
 1. pkg/ir + pkg/parser + 单元测试；
-2. pkg/valerr + pkg/check；
+2. pkg/errorx + pkg/check；
 3. pkg/gen + cmd/valgen + example/dto（golden + 一致性测试）；
 4. pkg/runtime + 测试；
 5. example/http、example/grpc、README、docs。
