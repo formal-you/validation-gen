@@ -45,3 +45,25 @@ jobs:
 
       - name: Whitespace check
         run: git diff --check
+
+  # main 保持线性：禁止 merge commit（docs/gitops/README.md §1）。
+  linear-main:
+    name: Main is linear
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Assert no merge commits on main
+        run: |
+          count=$(git rev-list --merges --count origin/main)
+          echo "merge commits on origin/main: ${count}"
+          if [ "${count}" != "0" ]; then
+            echo "::error::main 存在 merge commit，违反线性规范，请改用 gh pr merge --rebase"
+            exit 1
+          fi

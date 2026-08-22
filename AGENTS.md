@@ -53,7 +53,8 @@ go test -race ./... # 竞态检测
 - **注释**：导出 API 与非显然的边界（生成期报错、nil/零值语义、default 幂等、事务/生命周期约束）用简洁中文注释。
 - **命名**：公共错误包叫 `errorx`；包名避免与局部变量（如 `err`）冲突。
 - **文档流（gitOps）**：GitHub Issue/PR 是远程权威记录（`gh issue create` / `gh pr create`，
-  合并用 `gh pr merge --merge`）；本地 `docs/issue`、`docs/goal`、`docs/pr` 仅作镜像归档，
+  合并用 `gh pr merge --rebase`，`main` 保持线性、禁止 merge commit）；本地 `docs/issue`、
+  `docs/goal`、`docs/pr` 仅作镜像归档，
   `docs/review` 存评审报告。每个变更先建 Issue（含需求/验收），实现后开 PR 到远程并在 GitHub
   合并，本地 `git pull` 同步；提交信息用 conventional 前缀（`feat:` / `fix:` / `refactor:` /
   `docs:` / `test:`），正文可用中文。详见 `docs/gitops/README.md`。

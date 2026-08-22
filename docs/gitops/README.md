@@ -17,7 +17,7 @@
 5. 推送分支      git push -u origin feat/NNN-<标题>
 6. 开 PR         gh pr create --base main --head feat/NNN-<标题>  远程 PR：摘要 / 变更清单 / 评审
                  （可选）镜像 docs/pr/NNN-<标题>.md
-7. 合并          gh pr merge <编号> --merge（GitHub 上合并，保留 merge commit）
+7. 合并          gh pr merge <编号> --rebase（GitHub 上 rebase 合并，main 保持线性）
                  git checkout main && git pull（本地同步）
 8.（可选）评审    docs/review/<日期>-<主题>.md，按报告修复后再合并
 ```
@@ -25,6 +25,8 @@
 关键点：
 
 - **Issue 与 PR 必须在 GitHub 上创建**，这是远程可见的权威记录；本地 docs 只是镜像，不能替代；
+- **`main` 保持线性**：合并一律用 `gh pr merge --rebase`（保留每个提交）或 `--squash`（合并为单个提交），
+  **禁止 `--no-ff` / `--merge` 产生 merge commit**；CI 会校验 `main` 无 merge commit；
 - 合并发生在 **GitHub**（`gh pr merge`），不是本地 `git merge`；本地随时 `git pull` 保持同步；
 - 分支名与提交信息用 conventional 前缀：`feat:` / `fix:` / `refactor:` / `docs:` / `test:`；
 - 生成文件（`zz_generated.validation.go`）是派生产物，必须与 DTO 声明**同一 commit** 提交，
@@ -38,7 +40,8 @@
 ```bash
 gh issue create --title "<标题>" --body "<背景/需求/验收>"
 gh pr create --base main --head <分支> --title "<标题>" --body "<摘要/变更清单>"
-gh pr merge <编号> --merge          # GitHub 上合并，保留 merge commit
+gh pr merge <编号> --rebase        # GitHub 上 rebase 合并，main 保持线性（保留每个提交）
+gh pr merge <编号> --squash        # 或 squash 合并为单个提交（同样线性）
 gh issue list / gh pr list          # 查看远程记录
 ```
 
@@ -94,6 +97,8 @@ git push origin v0.1.0
 - PR 001-003：本地闭环合并并推送（当时 Issue/PR 仅记录在本地 docs，远程无记录）；
 - **自 004 起**：按本文档执行，GitHub Issue/PR 为远程权威记录；
 - 已落地：Issue #1 与 PR #2（004 GitOps 工作流落地）已创建并在 GitHub 合并到远程 `main`；
-- 已就位：GitHub Actions CI（`.github/workflows/ci.yml`）自动执行验收门禁，
-  开源配套文档（CONTRIBUTING / CODE_OF_CONDUCT / SECURITY / CHANGELOG）已入库；
+- 已就位：GitHub Actions CI（`.github/workflows/ci.yml`）自动执行验收门禁与
+  「main 无 merge commit」线性校验，开源配套文档（CONTRIBUTING / CODE_OF_CONDUCT / SECURITY / CHANGELOG）已入库；
+- **已线性化**：PR 001-004 的历史已重写为线性（移除全部 merge commit，内容不变），
+  此后 `main` 保持线性；
 - 待办：按需打 tag 发布（见 §5）。
