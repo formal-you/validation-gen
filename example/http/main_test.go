@@ -69,3 +69,92 @@ func TestSettingsHandlerDefaults(t *testing.T) {
 		t.Fatalf("status = %d, want 204; body=%s", rec.Code, rec.Body.String())
 	}
 }
+
+func TestWebRequestHandler(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /users/{id}", WebRequestHandler)
+
+	do := func(t *testing.T, target, token, formBody string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodPost, target, strings.NewReader(formBody))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		if token != "" {
+			req.Header.Set("X-Token", token)
+		}
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		return rec
+	}
+	fieldErrors := func(t *testing.T, rec *httptest.ResponseRecorder) []string {
+		t.Helper()
+		var resp struct {
+			Errors []struct {
+				Field string `json:"field"`
+				Code  string `json:"code"`
+			} `json:"errors"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("响应不是合法 JSON: %v; body=%s", err, rec.Body.String())
+		}
+		out := make([]string, 0, len(resp.Errors))
+		for _, e := range resp.Errors {
+			out = append(out, e.Field+":"+e.Code)
+		}
+		return out
+	}
+
+	t.Run("form+header+uri+query 合法请求返回 204", func(t *testing.T) {
+		rec := do(t, "/users/1?page=2", "1234567890", "username=alice")
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("status = %d, want 204; body=%s", rec.Code, rec.Body.String())
+		}
+	})
+
+	t.Run("form 字段缺失 -> username required", func(t *testing.T) {
+		rec := do(t, "/users/1", "1234567890", "username=")
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rec.Code)
+		}
+		got := fieldErrors(t, rec)
+		if len(got) != 1 || got[0] != "username:required" {
+			t.Fatalf("errors = %v, want [username:required]", got)
+		}
+	})
+
+	t.Run("header 缺失 -> X-Token required", func(t *testing.T) {
+		rec := do(t, "/users/1", "", "username=alice")
+		got := fieldErrors(t, rec)
+		if len(got) != 1 || got[0] != "X-Token:required" {
+			t.Fatalf("errors = %v, want [X-Token:required]", got)
+		}
+	})
+
+	t.Run("header 长度非法 -> X-Token len", func(t *testing.T) {
+		rec := do(t, "/users/1", "short", "username=alice")
+		got := fieldErrors(t, rec)
+		if len(got) != 1 || got[0] != "X-Token:len" {
+			t.Fatalf("errors = %v, want [X-Token:len]", got)
+		}
+	})
+
+	t.Run("uri id 非法 -> 400 bind 错误", func(t *testing.T) {
+		rec := do(t, "/users/abc", "1234567890", "username=alice")
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rec.Code)
+		}
+	})
+
+	t.Run("query page 非法 -> 400 bind 错误", func(t *testing.T) {
+		rec := do(t, "/users/1?page=abc", "1234567890", "username=alice")
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rec.Code)
+		}
+	})
+
+	t.Run("page 缺省 -> FillDefaults 填充后通过", func(t *testing.T) {
+		rec := do(t, "/users/1", "1234567890", "username=alice")
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("status = %d, want 204; body=%s", rec.Code, rec.Body.String())
+		}
+	})
+}
