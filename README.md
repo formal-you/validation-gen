@@ -9,6 +9,7 @@
   <a href="https://go.dev/"><img alt="Go 1.26+" src="https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go&logoColor=white"></a>
   <a href="https://github.com/go-playground/validator"><img alt="validator/v10" src="https://img.shields.io/badge/validator-v10.30.1-000000"></a>
   <a href="https://github.com/kubernetes/gengo"><img alt="gengo/v2" src="https://img.shields.io/badge/gengo-v2-326ce5"></a>
+  <a href="https://github.com/formal-you/validation-gen/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/formal-you/validation-gen/actions/workflows/ci.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
 </p>
 
@@ -322,6 +323,7 @@ DTO (validate/default tag)
 
 ```text
 validation-gen/
+├── 🤖 .github/workflows/ci.yml  # GitHub Actions：generate/build/vet/test/race 门禁
 ├── 🛠️ cmd/valgen/             # CLI：-type 可重复，-output 默认 zz_generated.validation.go
 ├── 🧩 pkg/ir/                 # 规则 IR（解析器与生成器的稳定契约）
 ├── 🔎 pkg/parser/             # tag 解析、类型检查、规则约束
@@ -332,7 +334,7 @@ validation-gen/
 ├── 🧪 example/dto/            # DTO + go:generate + 静态/runtime 一致性测试
 ├── 🧪 example/http/           # JSON/form/header/uri 绑定 + 400 结构化错误
 ├── 🧪 example/grpc/           # InvalidArgument + unary 拦截器
-└── 📚 docs/                   # spec / issue / goal / pr
+└── 📚 docs/                   # spec / issue / goal / pr / review / gitops
 ```
 
 ---
@@ -350,6 +352,9 @@ go test -race ./... # 竞态检测
 并确认：生成文件重新生成后无 diff（golden 测试强制）；静态/runtime 对照测试通过；
 不支持规则不会静默忽略；生成代码无反射；HTTP/gRPC 示例通过。
 
+> GitHub Actions（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）在 push/PR 到 `main`
+> 时自动执行同一套门禁，`git diff --exit-code` 强制生成文件与提交版一致。
+
 ---
 
 ## 🏷️ 当前发布状态
@@ -359,7 +364,7 @@ go test -race ./... # 竞态检测
 
 首次正式发布将完成：
 
-- 📝 整理 `CHANGELOG.md`；
+- 📝 持续维护 [`CHANGELOG.md`](CHANGELOG.md)；
 - 🏷️ 创建并推送 `v0.1.0`；
 - 📦 在全新模块中验证带版本号的 `go get`；
 - 🔎 检查 pkg.go.dev 索引。
@@ -376,12 +381,17 @@ go test -race ./... # 竞态检测
 | 🧪 | [example/http](example/http/main.go) | JSON/form/header/uri 绑定示例 |
 | 🧪 | [example/grpc](example/grpc/grpc.go) | gRPC 校验与拦截器示例 |
 | 🗂️ | [issue / goal / pr](docs/) | gitOps 变更记录 |
+| 🤝 | [参与贡献](CONTRIBUTING.md) | 开发环境、变更流程与代码约定 |
+| 📝 | [变更记录](CHANGELOG.md) | 版本间的重要变更 |
+| 🛡️ | [安全策略](SECURITY.md) | 报告安全漏洞 |
+| 💬 | [行为准则](CODE_OF_CONDUCT.md) | 社区行为规范 |
 
 ---
 
 ## 🤝 参与贡献
 
-欢迎提交 Issue 和 PR。新规则、框架适配、文档案例与互操作验证都很有价值，
+欢迎提交 Issue 和 PR，完整指南见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+新规则、框架适配、文档案例与互操作验证都很有价值，
 但请保持核心包的通用边界，并为行为变化补充测试。
 
 ```text

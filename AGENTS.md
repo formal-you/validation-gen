@@ -13,6 +13,9 @@ go test ./...       # 单元 + 集成 + golden + 静态/runtime 一致性测试
 go test -race ./... # 竞态检测
 ```
 
+> GitHub Actions（`.github/workflows/ci.yml`）在 push/PR 到 `main` 时自动执行上述门禁，
+> 其中 `git diff --exit-code` 强制生成文件与提交版一致。
+
 > `pkg/gen` 的 `TestGoldenExampleDTO` 会比对重新生成结果与提交的 `example/dto/zz_generated.validation.go`；
 > 修改生成器或 DTO 声明后，必须运行 `go generate ./...` 并把生成的派生文件一起提交，否则门禁失败。
 
@@ -49,5 +52,8 @@ go test -race ./... # 竞态检测
   UTF-8 字符数；`Validate()` 不修改接收对象、不调用 `FillDefaults()`。
 - **注释**：导出 API 与非显然的边界（生成期报错、nil/零值语义、default 幂等、事务/生命周期约束）用简洁中文注释。
 - **命名**：公共错误包叫 `errorx`；包名避免与局部变量（如 `err`）冲突。
-- **文档流（gitOps）**：变更记录走 `docs/issue`、`docs/pr`、`docs/goal` 与 `plan.md`；
-  提交信息用 conventional 前缀（`feat:` / `docs:` / `refactor:`），正文可用中文。
+- **文档流（gitOps）**：GitHub Issue/PR 是远程权威记录（`gh issue create` / `gh pr create`，
+  合并用 `gh pr merge --merge`）；本地 `docs/issue`、`docs/goal`、`docs/pr` 仅作镜像归档，
+  `docs/review` 存评审报告。每个变更先建 Issue（含需求/验收），实现后开 PR 到远程并在 GitHub
+  合并，本地 `git pull` 同步；提交信息用 conventional 前缀（`feat:` / `fix:` / `refactor:` /
+  `docs:` / `test:`），正文可用中文。详见 `docs/gitops/README.md`。

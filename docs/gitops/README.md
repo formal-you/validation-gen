@@ -1,45 +1,71 @@
-# gitOps 工作流（本地闭环 + 远程推送）
+# gitOps 工作流（GitHub Issue/PR 为远程权威记录）
 
-本仓库所有变更都走 git 记录：**本地先闭环（issue → goal → PR 分支 → 实现与测试 → PR 文档 → 合并），
-远程就绪后再推送**。文档与代码同仓，变更可追溯、可回看。
+本仓库所有变更都走 git 记录，且 **Issue 与 PR 的权威记录在 GitHub（远程可见）**：
+用 `gh issue create` / `gh pr create` 创建远程记录，本地 `docs/issue`、`docs/goal`、`docs/pr`
+只作为镜像/归档，`docs/review` 存放评审报告。变更可被团队查看、评审、追溯。
 
 ---
 
-## 1. 本地闭环流程
+## 1. 工作流（Issue -> 分支 -> GitHub PR -> 合并）
 
 ```text
-1. 建 Issue      docs/issue/NNN-<标题>.md      提交到 master（作为 base）
-2. 建 Goal       docs/goal/NNN-<标题>.md      目标 / 范围 / 完成定义（DoD）/ 拆解
+1. 建 Issue      gh issue create（或 GitHub 网页）  远程 Issue：背景 / 需求 / 验收（权威记录）
+                 （可选）镜像 docs/issue/NNN-<标题>.md
+2. 建 Goal       在 Issue 中写目标 / 范围 / DoD，或镜像 docs/goal/NNN-<标题>.md
 3. 开 PR 分支    git checkout -b feat/NNN-<标题>（或 fix:/refactor:/docs:）
 4. 实现 + 测试   按「验收门禁」全绿（golden 测试强制生成文件与提交版一致）
-5. 写 PR 文档    docs/pr/NNN-<标题>.md        摘要 / 变更清单 / 验收结果勾选
-6. 合并          git checkout master && git merge --no-ff feat/NNN-<标题> -m "Merge PR NNN: <标题>"
-7.（可选）评审    docs/review/<日期>-<主题>.md，按报告修复后再合并
+5. 推送分支      git push -u origin feat/NNN-<标题>
+6. 开 PR         gh pr create --base main --head feat/NNN-<标题>  远程 PR：摘要 / 变更清单 / 评审
+                 （可选）镜像 docs/pr/NNN-<标题>.md
+7. 合并          gh pr merge <编号> --merge（GitHub 上合并，保留 merge commit）
+                 git checkout main && git pull（本地同步）
+8.（可选）评审    docs/review/<日期>-<主题>.md，按报告修复后再合并
 ```
 
 关键点：
 
-- **Issue 在 master（base）上建**，实现全部在 PR 分支上，合并后才回到 master；
-- 合并用 `--no-ff`，保留 PR 分支历史，方便追溯每次变更的来龙去脉；
+- **Issue 与 PR 必须在 GitHub 上创建**，这是远程可见的权威记录；本地 docs 只是镜像，不能替代；
+- 合并发生在 **GitHub**（`gh pr merge`），不是本地 `git merge`；本地随时 `git pull` 保持同步；
 - 分支名与提交信息用 conventional 前缀：`feat:` / `fix:` / `refactor:` / `docs:` / `test:`；
 - 生成文件（`zz_generated.validation.go`）是派生产物，必须与 DTO 声明**同一 commit** 提交，
-  否则 `TestGoldenExampleDTO` 会失败。
+  否则 `TestGoldenExampleDTO` 会失败；
+- PR 正文写 `Closes #<issue>` 可在合并时自动关闭关联 Issue。
 
-## 2. 目录与命名约定
+## 2. 远程记录操作（gh CLI）
 
-```text
-docs/
-├── issue/NNN-<中文短横线标题>.md    # 背景 / 需求 / 验收
-├── goal/NNN-<中文短横线标题>.md     # 目标 / 范围 / DoD / 拆解
-├── pr/NNN-<中文短横线标题>.md       # 摘要 / 变更清单 / 验收结果
-├── review/<日期>-<主题>.md          # 代码评审报告（Standards + Spec 双轴）
-├── spec/validation-gen.md           # 权威规格
-└── gitops/README.md                 # 本文档
+前置：`gh auth status` 显示已登录且有 `repo` 权限（或直接用 GitHub 网页操作）。
+
+```bash
+gh issue create --title "<标题>" --body "<背景/需求/验收>"
+gh pr create --base main --head <分支> --title "<标题>" --body "<摘要/变更清单>"
+gh pr merge <编号> --merge          # GitHub 上合并，保留 merge commit
+gh issue list / gh pr list          # 查看远程记录
 ```
 
-编号从仓库内最大编号递增（当前 001、002）。
+## 3. 目录与命名约定
 
-## 3. 验收门禁
+```text
+validation-gen/
+├── .github/workflows/ci.yml        # GitHub Actions：自动执行验收门禁
+├── .github/ISSUE_TEMPLATE.md       # Issue 模板（背景 / 需求 / 验收）
+├── .github/PULL_REQUEST_TEMPLATE.md# PR 模板（摘要 / 变更清单 / 验收）
+├── CONTRIBUTING.md                 # 参与贡献指南（开发环境 / 变更流程 / 代码约定）
+├── CODE_OF_CONDUCT.md              # 行为准则
+├── SECURITY.md                     # 安全策略与漏洞报告
+├── CHANGELOG.md                    # 变更记录（Keep a Changelog）
+└── docs/
+    ├── issue/NNN-<中文短横线标题>.md    # 本地镜像（可选）：GitHub Issue 的归档
+    ├── goal/NNN-<中文短横线标题>.md     # 本地镜像（可选）：目标 / 范围 / DoD
+    ├── pr/NNN-<中文短横线标题>.md       # 本地镜像（可选）：GitHub PR 的归档
+    ├── review/<日期>-<主题>.md          # 代码评审报告（Standards + Spec 双轴）
+    ├── spec/validation-gen.md           # 权威规格
+    └── gitops/README.md                 # 本文档
+```
+
+编号从仓库内最大编号递增（当前 001-004）。本地 `NNN` 是稳定序列，与 GitHub 平台分配的
+Issue/PR 编号解耦；镜像文档中标注对应的 GitHub Issue/PR 编号与 URL 以便回溯。
+
+## 4. 验收门禁
 
 ```bash
 go generate ./...   # 重新生成 zz_generated.validation.go（golden 测试强制与提交版一致）
@@ -53,46 +79,6 @@ git diff --check    # 无空白错误
 并确认：生成文件重新生成后无 diff；静态/runtime 对照测试通过；
 不支持规则不会被静默忽略；生成代码无反射；HTTP/gRPC 示例通过。
 
-## 4. 远程推送（首次）
-
-前置条件：
-
-1. 远程仓库已建立（如 https://github.com/formal-you/validation-gen.git）；
-2. 本机凭据可用（**有仓库权限的 HTTPS PAT** 或 **已注册到 GitHub 的 SSH key**，二选一）。
-
-```bash
-# 1) 添加远程（只执行一次）
-git remote add origin https://github.com/formal-you/validation-gen.git
-
-# 2) 本地默认分支 master 重命名为 main（只执行一次）
-git branch -M main
-
-# 3) 首次推送并设置 upstream
-git push -u origin main
-```
-
-推送成功后，后续提交只需 `git push`（main 已绑定 origin/main）。
-
-> 若远程**已经有代码**（例如已从其他机器推送过）：先 `git fetch origin` 确认本地与远程的关系。
-> 本地领先（fast-forward 可推）时直接 `git push` 即可；本地落后时先 `git pull --rebase` 再推；
-> 若两边历史不相关（如远程有 GitHub UI 初始提交），先对齐历史（`git merge --allow-unrelated-histories` 或 rebase）再推送。
-
-### 4.1 凭据问题排查（本次实测遇到）
-
-- **HTTPS 403**：`Permission to formal-you/validation-gen.git denied to FormalYou`
-  —— 本机 `~/.git-credentials` 里存的是 OAuth token（`gho_…`），归属账号 `FormalYou`，对该仓库无权限；
-- **SSH 拒绝**：`git@github.com: Permission denied (publickey)`
-  —— `~/.ssh/id_ed25519.pub` 未注册到 GitHub。
-
-两条修复路径二选一：
-
-| 路径 | 操作 |
-| --- | --- |
-| **SSH（推荐）** | 把 `~/.ssh/id_ed25519.pub` 加到 `formal-you` 账号的 GitHub → Settings → SSH and GPG keys，然后 `git remote set-url origin git@github.com:formal-you/validation-gen.git`，再 `git push -u origin main` |
-| **HTTPS** | 给 `formal-you` 账号生成带 `repo` 权限的 PAT，更新本机凭据后重试 `git push -u origin main` |
-
-验证：`git remote -v` 看远程 URL；`git ls-remote origin` 能看到 refs 即连接成功。
-
 ## 5. 发布（后续，打 tag）
 
 ```bash
@@ -105,9 +91,9 @@ git push origin v0.1.0
 
 ## 6. 当前状态（2026-08-22）
 
-- 已合并：PR 001（静态校验生成器）、PR 002（HTTP 绑定示例与 README 增强）、
-  PR 003（代码评审问题修复，见 `docs/review/2026-08-22-代码评审报告.md`）；
-- 已就位：`origin` 已添加、本地默认分支已重命名为 `main`（`git branch -M main`）；
-- **已推送**：远程 `main` 已同步至 `60d3356`（PR 003 合并后）；
-- **已入库**：`AGENTS.md` 与 `docs/review/2026-08-22-代码评审报告.md` 已随 PR 003 base 提交；
+- PR 001-003：本地闭环合并并推送（当时 Issue/PR 仅记录在本地 docs，远程无记录）；
+- **自 004 起**：按本文档执行，GitHub Issue/PR 为远程权威记录；
+- 已落地：Issue #1（004 GitOps 工作流落地）与 PR #1 已创建并在 GitHub 合并到远程 `main`；
+- 已就位：GitHub Actions CI（`.github/workflows/ci.yml`）自动执行验收门禁，
+  开源配套文档（CONTRIBUTING / CODE_OF_CONDUCT / SECURITY / CHANGELOG）已入库；
 - 待办：按需打 tag 发布（见 §5）。
