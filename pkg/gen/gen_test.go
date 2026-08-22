@@ -185,7 +185,7 @@ func TestGoldenExampleDTO(t *testing.T) {
 	}
 	pkg := u[requested[0]]
 
-	names := []string{"CreateUserRequest", "UserProfile", "Order", "Settings", "NoValidate"}
+	names := []string{"CreateUserRequest", "UserProfile", "Order", "Settings", "NoValidate", "WebRequest"}
 	var trs []ir.TypeRules
 	for _, name := range names {
 		tr, err := parser.ParseType(pkg.Path, pkg.Types[name])

@@ -211,3 +211,38 @@ func (x *NoValidate) Validate() error {
 // FillDefaults 为 NoValidate 的零值字段填充 default 值，幂等，不覆盖非零值。
 func (x *NoValidate) FillDefaults() {
 }
+
+// Validate 校验 WebRequest 的静态规则（v1 白名单）。
+// 与 validator/v10 语义一致：同一字段只报告 tag 顺序中第一个失败的规则；
+// 不修改接收对象，不调用 FillDefaults。
+func (x *WebRequest) Validate() error {
+	var errs []error
+	if x.Username == "" {
+		errs = append(errs, &valerr.FieldError{Field: "username", Code: "required"})
+	} else if check.Runes(string(x.Username)) < 3 {
+		errs = append(errs, &valerr.FieldError{Field: "username", Code: "min"})
+	}
+	if x.Token == "" {
+		errs = append(errs, &valerr.FieldError{Field: "X-Token", Code: "required"})
+	} else if check.Runes(string(x.Token)) != 10 {
+		errs = append(errs, &valerr.FieldError{Field: "X-Token", Code: "len"})
+	}
+	if x.ID == 0 {
+		errs = append(errs, &valerr.FieldError{Field: "id", Code: "required"})
+	} else if int64(x.ID) <= 0 {
+		errs = append(errs, &valerr.FieldError{Field: "id", Code: "gt"})
+	}
+	if x.Page == 0 {
+		// omitempty: 跳过剩余规则
+	} else if int64(x.Page) < 1 {
+		errs = append(errs, &valerr.FieldError{Field: "page", Code: "gte"})
+	}
+	return errors.Join(errs...)
+}
+
+// FillDefaults 为 WebRequest 的零值字段填充 default 值，幂等，不覆盖非零值。
+func (x *WebRequest) FillDefaults() {
+	if x.Page == 0 {
+		x.Page = 1
+	}
+}

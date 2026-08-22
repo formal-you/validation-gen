@@ -6,7 +6,7 @@
 //	go generate ./example/dto
 package dto
 
-//go:generate go run ../../cmd/valgen -type=CreateUserRequest -type=UserProfile -type=Order -type=Settings -type=NoValidate -output=zz_generated.validation.go
+//go:generate go run ../../cmd/valgen -type=CreateUserRequest -type=UserProfile -type=Order -type=Settings -type=NoValidate -type=WebRequest -output=zz_generated.validation.go
 
 // Username 是 string 的 named type，验证 named type 支持。
 type Username string
@@ -62,4 +62,13 @@ type Settings struct {
 type NoValidate struct {
 	A string `json:"a"`
 	B int    `json:"b"`
+}
+
+// WebRequest 演示 form/header/uri 绑定来源的字段同样使用 validate/default tag：
+// 校验与默认值不关心字段从哪个来源绑定，错误路径按绑定名输出。
+type WebRequest struct {
+	Username string `form:"username" validate:"required,min=3"`
+	Token    string `header:"X-Token" validate:"required,len=10"`
+	ID       int64  `uri:"id" validate:"required,gt=0"`
+	Page     int    `form:"page" validate:"omitempty,gte=1" default:"1"`
 }

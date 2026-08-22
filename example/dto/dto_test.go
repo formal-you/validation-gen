@@ -209,3 +209,45 @@ func TestValidateDoesNotMutate(t *testing.T) {
 		t.Fatalf("Validate 不应修改接收对象，Role = %q", s.Role)
 	}
 }
+
+func TestWebRequestConform(t *testing.T) {
+	cases := []struct {
+		name string
+		req  WebRequest
+		want []valerr.FieldError
+	}{
+		{name: "合法", req: WebRequest{Username: "alice", Token: "1234567890", ID: 1, Page: 2}},
+		{name: "form required 失败", req: WebRequest{Username: "", Token: "1234567890", ID: 1, Page: 2},
+			want: []valerr.FieldError{{Field: "username", Code: "required"}}},
+		{name: "form min 失败", req: WebRequest{Username: "ab", Token: "1234567890", ID: 1, Page: 2},
+			want: []valerr.FieldError{{Field: "username", Code: "min"}}},
+		{name: "header required 失败", req: WebRequest{Username: "alice", Token: "", ID: 1, Page: 2},
+			want: []valerr.FieldError{{Field: "X-Token", Code: "required"}}},
+		{name: "header len 失败", req: WebRequest{Username: "alice", Token: "short", ID: 1, Page: 2},
+			want: []valerr.FieldError{{Field: "X-Token", Code: "len"}}},
+		{name: "uri required 失败", req: WebRequest{Username: "alice", Token: "1234567890", ID: 0, Page: 2},
+			want: []valerr.FieldError{{Field: "id", Code: "required"}}},
+		{name: "uri gt 失败", req: WebRequest{Username: "alice", Token: "1234567890", ID: -1, Page: 2},
+			want: []valerr.FieldError{{Field: "id", Code: "gt"}}},
+		{name: "form 零值跳过", req: WebRequest{Username: "alice", Token: "1234567890", ID: 1, Page: 0}},
+		{name: "多字段错误按声明顺序", req: WebRequest{Username: "", Token: "", ID: 0},
+			want: []valerr.FieldError{
+				{Field: "username", Code: "required"},
+				{Field: "X-Token", Code: "required"},
+				{Field: "id", Code: "required"},
+			}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assertConform(t, c.name, &c.req, c.want)
+		})
+	}
+}
+
+func TestWebRequestFillDefaults(t *testing.T) {
+	req := &WebRequest{}
+	req.FillDefaults()
+	if req.Page != 1 {
+		t.Fatalf("FillDefaults() 后 Page = %d, want 1", req.Page)
+	}
+}

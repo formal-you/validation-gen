@@ -67,7 +67,8 @@ type Default struct {
 type FieldRules struct {
 	// GoName 是字段在结构体中的声明名。
 	GoName string
-	// JSONName 是对外使用的字段路径：优先取 json tag 名称，否则取 Go 字段名。
+	// JSONName 是对外使用的字段路径（错误路径）：
+	// 按 valerr.FieldName 的优先级取 json/form/query/header/uri/param 绑定名，否则取 Go 字段名。
 	JSONName string
 	// Kind 是字段解析后的标量类型族。
 	Kind Kind

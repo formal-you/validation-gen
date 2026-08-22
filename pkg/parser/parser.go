@@ -16,6 +16,7 @@ import (
 	"k8s.io/gengo/v2/types"
 
 	"github.com/formal-you/validation-gen/pkg/ir"
+	"github.com/formal-you/validation-gen/pkg/valerr"
 )
 
 // supportedRules 是 v1 静态生成支持的规则白名单。
@@ -110,11 +111,7 @@ func ParseField(pkgName, typeName string, m types.Member) (ir.FieldRules, bool, 
 		return fr, false, fmt.Errorf("%s.%s.%s: default tag 为空，请删除或填写默认值", pkgName, typeName, m.Name)
 	}
 
-	jsonName, err := JSONName(m)
-	if err != nil {
-		return fr, false, fmt.Errorf("%s.%s.%s: %w", pkgName, typeName, m.Name, err)
-	}
-	fr.JSONName = jsonName
+	fr.JSONName = FieldName(m)
 
 	kind, bitSize, isPointer, err := ResolveKind(m.Type)
 	if err != nil {
@@ -123,9 +120,9 @@ func ParseField(pkgName, typeName string, m types.Member) (ir.FieldRules, bool, 
 	fr.Kind, fr.BitSize, fr.IsPointer = kind, bitSize, isPointer
 
 	if hasValidate {
-		// json:"-" 的字段不对外，禁止再声明校验规则。
-		if jsonName == "-" {
-			return fr, false, fmt.Errorf("%s.%s.%s: json:\"-\" 与 validate 规则冲突", pkgName, typeName, m.Name)
+		// 绑定 tag 为 "-" 的字段不对外，禁止再声明校验规则。
+		if fr.JSONName == "-" {
+			return fr, false, fmt.Errorf("%s.%s.%s: 绑定 tag 为 \"-\" 与 validate 规则冲突", pkgName, typeName, m.Name)
 		}
 		rules, err := ParseRules(validateTag, kind, bitSize, isPointer)
 		if err != nil {
@@ -145,18 +142,13 @@ func ParseField(pkgName, typeName string, m types.Member) (ir.FieldRules, bool, 
 	return fr, true, nil
 }
 
-// JSONName 返回字段对外使用的 JSON 名称：优先 json tag 的 name 部分，
-// 否则使用 Go 字段名。json:"-" 返回 "-"。
-func JSONName(m types.Member) (string, error) {
-	raw, ok := structTag(m.Tags).Lookup("json")
-	if !ok || raw == "" {
-		return m.Name, nil
-	}
-	name := raw
-	if i := strings.IndexByte(raw, ','); i >= 0 {
-		name = raw[:i]
-	}
-	return name, nil
+// FieldName 返回字段对外使用的名称（错误路径）。
+//
+// 优先级：json > form > query > header > uri > param > Go 字段名；
+// 与 runtime adapter 共用 valerr.FieldName，保证静态与运行时错误路径一致。
+// `json:"-"`（或其他绑定 tag 为 "-"）返回 "-"。
+func FieldName(m types.Member) string {
+	return valerr.FieldName(structTag(m.Tags), m.Name)
 }
 
 // ResolveKind 把 gengo 类型解析为 v1 支持的标量类型族。

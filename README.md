@@ -42,6 +42,14 @@ type CreateUserRequest struct {
 type UserRequest struct {
     Role string `json:"role,omitempty" validate:"required" default:"guest"`
 }
+
+// form/header/uri 绑定来源的字段同样支持校验与默认值
+type WebRequest struct {
+    Username string `form:"username" validate:"required,min=3"`
+    Token    string `header:"X-Token" validate:"required,len=10"`
+    ID       int64  `uri:"id" validate:"required,gt=0"`
+    Page     int    `form:"page" validate:"omitempty,gte=1" default:"1"`
+}
 ```
 
 生成：
@@ -53,7 +61,10 @@ func (x *UserRequest) FillDefaults()
 
 - `Validate()` 不修改接收对象，不调用 `FillDefaults()`；
 - `FillDefaults()` 只填充零值字段，幂等，不覆盖非零值；
-- 未加 `validate` tag 的字段一律忽略。
+- 未加 `validate` tag 的字段一律忽略；
+- **绑定来源无关**：字段来自 JSON、form 表单、query、header 或 URI 路径参数都可以使用
+  同样的 `validate`/`default` tag（如 gin 的 `form`/`header`/`uri`、echo 的 `form`/`query`/`param`），
+  生成器只关心规则与类型，不关心绑定机制。
 
 ## 静态规则白名单（v1）
 
@@ -98,12 +109,16 @@ struct-level validator，以及依赖数据库/外部服务的规则。静态生
 
 ```go
 type FieldError struct {
-    Field string `json:"field"` // JSON 字段路径，如 "name"、"profile.email"、"items[0].sku"
+    Field string `json:"field"` // 对外字段路径，如 "name"、"profile.email"、"items[0].sku"
     Code  string `json:"code"`  // 失败规则名，如 "required"、"min"
 }
 
 func CollectFieldErrors(err error) []FieldError
 ```
+
+对外字段路径按绑定 tag 解析，优先级：`json` > `form` > `query` > `header` > `uri` > `param` >
+Go 字段名（多个 tag 同时存在时取优先级最高者）；静态生成与 runtime adapter 共用同一规则。
+例如 `header:"X-Token"` 的字段错误路径为 `X-Token`。
 
 `Validate()` 使用 `errors.Join` 聚合所有字段错误，字段顺序与 struct 声明顺序一致。
 错误字符串仅用于日志和调试，不作为 HTTP/gRPC 协议。
@@ -125,7 +140,8 @@ fields := valerr.CollectFieldErrors(err)
 
 ## 示例
 
-- `example/dto`：DTO 声明、`go:generate`、生成文件、静态/runtime 一致性测试；
+- `example/dto`：DTO 声明（含 form/header/uri 绑定来源的 `WebRequest`）、`go:generate`、
+  生成文件、静态/runtime 一致性测试；
 - `example/http`：`JSON bind -> FillDefaults -> Validate -> 400 结构化错误`（标准库 net/http）；
 - `example/grpc`：`request -> Validate -> status.Error(codes.InvalidArgument, ...)` 与 unary 拦截器。
 

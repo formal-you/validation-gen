@@ -266,6 +266,24 @@ func TestParseField(t *testing.T) {
 			ok: true,
 		},
 		{
+			name: "header 绑定名作为错误路径",
+			m:    member("Token", `header:"X-Token" validate:"required,len=10"`, str),
+			want: ir.FieldRules{
+				GoName: "Token", JSONName: "X-Token", Kind: ir.KindString,
+				Rules: []ir.Rule{{Name: "required"}, {Name: "len", Raw: "10", Literal: "10"}},
+			},
+			ok: true,
+		},
+		{
+			name: "form 优先于 uri",
+			m:    member("Page", `form:"page" uri:"page_id" validate:"omitempty,gte=1"`, intT),
+			want: ir.FieldRules{
+				GoName: "Page", JSONName: "page", Kind: ir.KindSigned, BitSize: 64,
+				Rules: []ir.Rule{{Name: "omitempty"}, {Name: "gte", Raw: "1", Literal: "1"}},
+			},
+			ok: true,
+		},
+		{
 			name: "无 json tag 用 Go 字段名",
 			m:    member("Age", `validate:"gte=0"`, intT),
 			want: ir.FieldRules{
@@ -292,7 +310,7 @@ func TestParseField(t *testing.T) {
 		{
 			name:    "json:- 与 validate 冲突",
 			m:       member("Skip", `json:"-" validate:"required"`, str),
-			wantErr: `json:"-" 与 validate 规则冲突`,
+			wantErr: `绑定 tag 为 "-" 与 validate 规则冲突`,
 		},
 		{
 			name:    "空 validate tag",
