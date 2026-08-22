@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Generate / Build / Vet / Test / Race
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # 与 docs/gitops/README.md「验收门禁」一致：
+      # go generate 后 git diff --exit-code 强制生成文件与提交版一致（golden 门禁）。
+      - name: Generate
+        run: go generate ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Race
+        run: go test -race ./...
+
+      - name: Generated files unchanged
+        run: git diff --exit-code
+
+      - name: Whitespace check
+        run: git diff --check
