@@ -100,9 +100,11 @@ git push origin v0.1.0
 
 - PR 001-003：本地闭环合并并推送（当时 Issue/PR 仅记录在本地 docs，远程无记录）；
 - **自 004 起**：按本文档执行，GitHub Issue/PR 为远程权威记录；
-- 已落地：Issue #1 与 PR #2（004 GitOps 工作流落地）已创建并在 GitHub 合并到远程 `main`；
-- 已就位：GitHub Actions CI（`.github/workflows/ci.yml`）自动执行验收门禁与
-  「main 无 merge commit」线性校验，开源配套文档（CONTRIBUTING / CODE_OF_CONDUCT / SECURITY / CHANGELOG）已入库；
+- 已落地：Issue #1 / PR #2（004 GitOps 工作流落地）、Issue #3 / PR #4（005 分支命名规范）
+  均在 GitHub 创建并合并到远程 `main`；
+- 已就位：GitHub Actions CI（`.github/workflows/ci.yml`）自动执行验收门禁、
+  「main 无 merge commit」线性校验与 `branch-name` 分支命名校验；
+  开源配套文档（CONTRIBUTING / CODE_OF_CONDUCT / SECURITY / CHANGELOG）已入库；
 - **已线性化**：PR 001-004 的历史已重写为线性（移除全部 merge commit，内容不变），
   此后 `main` 保持线性；
 - 待办：按需打 tag 发布（见 §5）。
