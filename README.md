@@ -163,6 +163,8 @@ if err := req.Validate(); err != nil {
 
 ## 🧩 静态规则白名单（v1）
 
+> 完整写法速查（分隔符、参数格式、default、常见报错）见 [docs/tag-reference.md](docs/tag-reference.md)。
+
 | 规则 | 适用类型 | 语义（与 validator/v10 一致） |
 | --- | --- | --- |
 | `required` | 全部标量 | 零值（指针为 nil）失败 |
@@ -376,6 +378,7 @@ go test -race ./... # 竞态检测
 | | 文档 | 适合什么时候看 |
 |:---:|:---|:---|
 | 📐 | [规格说明](docs/spec/validation-gen.md) | 完整需求、测试计划与验收门槛 |
+| 📖 | [validate/default tag 参考](docs/tag-reference.md) | 规则写法、分隔符与支持范围 |
 | 🧭 | [实现计划](plan.md) | 了解目录、语义与实施顺序 |
 | 🧪 | [example/dto](example/dto/dto.go) | 看规则声明与一致性测试 |
 | 🧪 | [example/http](example/http/main.go) | JSON/form/header/uri 绑定示例 |
