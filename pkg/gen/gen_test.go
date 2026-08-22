@@ -109,6 +109,9 @@ func TestGenerateNoRules(t *testing.T) {
 	if strings.Contains(out, "github.com/formal-you/validation-gen/pkg/errorx") {
 		t.Fatal("无规则类型不应导入 err")
 	}
+	if strings.Contains(out, "func (x *Empty) FillDefaults()") {
+		t.Fatal("无 default 字段的类型不应生成 FillDefaults()")
+	}
 }
 
 func TestGenerateFillDefaults(t *testing.T) {

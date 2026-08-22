@@ -58,7 +58,8 @@ type Settings struct {
 	Title string  `json:"title,omitempty" validate:"max=10" default:"untitled"`
 }
 
-// NoValidate 没有任何校验规则：Validate() 直接返回 nil，不生成 FillDefaults。
+// NoValidate 没有任何校验规则也没有 default 字段：
+// Validate() 直接返回 nil，不生成 FillDefaults()。
 type NoValidate struct {
 	A string `json:"a"`
 	B int    `json:"b"`
