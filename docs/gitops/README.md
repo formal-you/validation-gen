@@ -105,8 +105,9 @@ git push origin v0.1.0
 
 ## 6. 当前状态（2026-08-22）
 
-- 已合并：PR 001（静态校验生成器）、PR 002（HTTP 绑定示例与 README 增强）；
-- 已就位：`origin` 已添加、本地分支已重命名为 `main`（`git branch -M main`）；
-- **已推送**：远程 `main` 已存在（`0e74624`，含 valerr→errorx 重构）；
-- **已同步**：本地 `main` 与远程 `origin/main` 一致（`47ff3b6`，含 gitOps 文档与状态修正）；
-- 未跟踪：`AGENTS.md`、`docs/review/2026-08-22-代码评审报告.md`（评审建议尽快提交 AGENTS.md）。
+- 已合并：PR 001（静态校验生成器）、PR 002（HTTP 绑定示例与 README 增强）、
+  PR 003（代码评审问题修复，见 `docs/review/2026-08-22-代码评审报告.md`）；
+- 已就位：`origin` 已添加、本地默认分支已重命名为 `main`（`git branch -M main`）；
+- **已推送**：远程 `main` 已同步至 `60d3356`（PR 003 合并后）；
+- **已入库**：`AGENTS.md` 与 `docs/review/2026-08-22-代码评审报告.md` 已随 PR 003 base 提交；
+- 待办：按需打 tag 发布（见 §5）。
