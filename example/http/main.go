@@ -8,6 +8,7 @@ package httpexample
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/formal-you/validation-gen/example/dto"
 	"github.com/formal-you/validation-gen/pkg/valerr"
@@ -22,6 +23,41 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
 		return
+	}
+	req.FillDefaults()
+	if err := req.Validate(); err != nil {
+		writeFieldErrors(w, http.StatusBadRequest, valerr.CollectFieldErrors(err))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// WebRequestHandler 演示 form/header/query/uri 混合绑定的校验：
+//
+//	POST /users/{id}?page=N
+//	Header: X-Token: <token>
+//	Body (application/x-www-form-urlencoded): username=alice
+//
+// 绑定 -> FillDefaults -> Validate，失败返回 400 结构化错误。
+// gin/echo 等框架用对应绑定 tag（form/header/uri/query/param）做同样的事，
+// 这里用标准库演示，避免引入框架依赖。
+func WebRequestHandler(w http.ResponseWriter, r *http.Request) {
+	var req dto.WebRequest
+	req.Username = r.PostFormValue("username")
+	req.Token = r.Header.Get("X-Token")
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+	req.ID = id
+	if p := r.URL.Query().Get("page"); p != "" {
+		page, err := strconv.Atoi(p)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid page")
+			return
+		}
+		req.Page = page
 	}
 	req.FillDefaults()
 	if err := req.Validate(); err != nil {
