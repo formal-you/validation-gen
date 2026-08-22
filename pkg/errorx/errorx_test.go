@@ -1,4 +1,4 @@
-package valerr
+package errorx
 
 import (
 	"errors"

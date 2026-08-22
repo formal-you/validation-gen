@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	"github.com/formal-you/validation-gen/example/dto"
-	"github.com/formal-you/validation-gen/pkg/valerr"
+	"github.com/formal-you/validation-gen/pkg/errorx"
 )
 
 // CreateUserHandler 处理 POST /users。
@@ -26,7 +26,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	req.FillDefaults()
 	if err := req.Validate(); err != nil {
-		writeFieldErrors(w, http.StatusBadRequest, valerr.CollectFieldErrors(err))
+		writeFieldErrors(w, http.StatusBadRequest, errorx.CollectFieldErrors(err))
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -61,7 +61,7 @@ func WebRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	req.FillDefaults()
 	if err := req.Validate(); err != nil {
-		writeFieldErrors(w, http.StatusBadRequest, valerr.CollectFieldErrors(err))
+		writeFieldErrors(w, http.StatusBadRequest, errorx.CollectFieldErrors(err))
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -77,14 +77,14 @@ func SettingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	req.FillDefaults()
 	if err := req.Validate(); err != nil {
-		writeFieldErrors(w, http.StatusBadRequest, valerr.CollectFieldErrors(err))
+		writeFieldErrors(w, http.StatusBadRequest, errorx.CollectFieldErrors(err))
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
 // writeFieldErrors 以 JSON 数组形式输出结构化校验错误。
-func writeFieldErrors(w http.ResponseWriter, status int, fields []valerr.FieldError) {
+func writeFieldErrors(w http.ResponseWriter, status int, fields []errorx.FieldError) {
 	writeJSON(w, status, map[string]any{"errors": fields})
 }
 

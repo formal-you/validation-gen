@@ -1,8 +1,8 @@
-// Package valerr 提供校验错误模型：FieldError 与 CollectFieldErrors。
+// Package errorx 提供校验错误模型：FieldError 与 CollectFieldErrors。
 //
 // 该包是生成代码与 runtime adapter 共同依赖的公共错误包，
-// 生成代码只依赖 valerr 与纯校验 helper（pkg/check），不依赖反射。
-package valerr
+// 生成代码只依赖 errorx 与纯校验 helper（pkg/check），不依赖反射。
+package errorx
 
 import (
 	"fmt"

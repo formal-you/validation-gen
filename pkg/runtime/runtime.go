@@ -15,7 +15,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/formal-you/validation-gen/pkg/valerr"
+	"github.com/formal-you/validation-gen/pkg/errorx"
 )
 
 // Validate 使用 validator/v10 对 value 执行完整运行时校验。
@@ -23,7 +23,7 @@ import (
 // v 为 nil 时创建一次性实例（每次调用独立，不共享全局状态）；
 // 传入自定义实例时，调用方已有的 RegisterValidation/RegisterAlias/StructCtx 配置保持不变。
 //
-// 返回的错误可通过 valerr.CollectFieldErrors 还原为 []FieldError，
+// 返回的错误可通过 errorx.CollectFieldErrors 还原为 []FieldError，
 // 字段路径已映射为 JSON 名称；非校验错误（如 InvalidValidationError）原样返回。
 func Validate(ctx context.Context, v *validator.Validate, value any) error {
 	if v == nil {
@@ -37,7 +37,7 @@ func Validate(ctx context.Context, v *validator.Validate, value any) error {
 	if errors.As(err, &verrs) {
 		fields := make([]error, 0, len(verrs))
 		for _, fe := range verrs {
-			fields = append(fields, &valerr.FieldError{
+			fields = append(fields, &errorx.FieldError{
 				Field: FieldPath(fe, value),
 				Code:  fe.Tag(),
 			})
@@ -139,7 +139,7 @@ func splitIndex(seg string) (name string, idx int, hasIdx bool, key string, hasK
 }
 
 // jsonFieldName 返回结构体字段的对外名称（错误路径）。
-// 与静态生成共用 valerr.FieldName：json > form > query > header > uri > param > Go 字段名。
+// 与静态生成共用 errorx.FieldName：json > form > query > header > uri > param > Go 字段名。
 func jsonFieldName(sf reflect.StructField) string {
-	return valerr.FieldName(sf.Tag, sf.Name)
+	return errorx.FieldName(sf.Tag, sf.Name)
 }
