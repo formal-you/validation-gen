@@ -51,10 +51,6 @@ func (x *CreateUserRequest) Validate() error {
 	return errors.Join(errs...)
 }
 
-// FillDefaults 为 CreateUserRequest 的零值字段填充 default 值，幂等，不覆盖非零值。
-func (x *CreateUserRequest) FillDefaults() {
-}
-
 // Validate 校验 UserProfile 的静态规则（v1 白名单）。
 // 与 validator/v10 语义一致：同一字段只报告 tag 顺序中第一个失败的规则；
 // 不修改接收对象，不调用 FillDefaults。
@@ -107,10 +103,6 @@ func (x *UserProfile) Validate() error {
 	return errors.Join(errs...)
 }
 
-// FillDefaults 为 UserProfile 的零值字段填充 default 值，幂等，不覆盖非零值。
-func (x *UserProfile) FillDefaults() {
-}
-
 // Validate 校验 Order 的静态规则（v1 白名单）。
 // 与 validator/v10 语义一致：同一字段只报告 tag 顺序中第一个失败的规则；
 // 不修改接收对象，不调用 FillDefaults。
@@ -139,10 +131,6 @@ func (x *Order) Validate() error {
 		errs = append(errs, &errorx.FieldError{Field: "note", Code: "max"})
 	}
 	return errors.Join(errs...)
-}
-
-// FillDefaults 为 Order 的零值字段填充 default 值，幂等，不覆盖非零值。
-func (x *Order) FillDefaults() {
 }
 
 // Validate 校验 Settings 的静态规则（v1 白名单）。
@@ -206,10 +194,6 @@ func (x *Settings) FillDefaults() {
 // 不修改接收对象，不调用 FillDefaults。
 func (x *NoValidate) Validate() error {
 	return nil
-}
-
-// FillDefaults 为 NoValidate 的零值字段填充 default 值，幂等，不覆盖非零值。
-func (x *NoValidate) FillDefaults() {
 }
 
 // Validate 校验 WebRequest 的静态规则（v1 白名单）。

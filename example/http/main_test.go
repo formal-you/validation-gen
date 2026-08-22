@@ -59,6 +59,36 @@ func TestCreateUserHandler(t *testing.T) {
 			t.Fatalf("status = %d, want 400", rec.Code)
 		}
 	})
+
+	t.Run("显式提供零值 nickname=空串 -> min 失败", func(t *testing.T) {
+		// 显式提供的零值不会被当作未提供跳过：nickname 无 omitempty，min=1 校验失败。
+		body := `{"name":"Alice","email":"a@b.com","age":30,"role":"admin","nickname":"","active":true}`
+		rec := doPost(t, CreateUserHandler, body)
+		if rec.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400; body=%s", rec.Code, rec.Body.String())
+		}
+		var resp struct {
+			Errors []struct {
+				Field string `json:"field"`
+				Code  string `json:"code"`
+			} `json:"errors"`
+		}
+		if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("响应不是合法 JSON: %v", err)
+		}
+		if len(resp.Errors) != 1 || resp.Errors[0].Field != "nickname" || resp.Errors[0].Code != "min" {
+			t.Fatalf("errors = %+v, want [{nickname min}]", resp.Errors)
+		}
+	})
+
+	t.Run("显式提供零值 age=0 且规则允许 -> 204", func(t *testing.T) {
+		// age 显式传 0（零值）：omitempty 只对 nil/空指针短路，值 0 仍执行 gte=0/lte=150，应通过。
+		body := `{"name":"Alice","nickname":"n","active":true,"age":0}`
+		rec := doPost(t, CreateUserHandler, body)
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("status = %d, want 204; body=%s", rec.Code, rec.Body.String())
+		}
+	})
 }
 
 func TestSettingsHandlerDefaults(t *testing.T) {

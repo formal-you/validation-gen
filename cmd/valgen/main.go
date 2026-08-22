@@ -13,6 +13,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -36,37 +37,47 @@ func (t *typeFlag) Set(v string) error {
 }
 
 func main() {
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+// run 执行生成流程，返回进程退出码（0 成功、1 生成/解析失败、2 用法错误）。
+// 独立成函数便于集成测试验证「非法规则不写文件」等门禁行为。
+func run(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("valgen", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	var typeNames typeFlag
-	output := flag.String("output", "zz_generated.validation.go", "生成文件路径（相对当前目录）")
-	flag.Var(&typeNames, "type", "要生成校验方法的类型名，可重复指定")
-	flag.Parse()
+	output := fs.String("output", "zz_generated.validation.go", "生成文件路径（相对当前目录）")
+	fs.Var(&typeNames, "type", "要生成校验方法的类型名，可重复指定")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if len(typeNames) == 0 {
-		fmt.Fprintln(os.Stderr, "错误：至少指定一个 -type")
-		flag.Usage()
-		os.Exit(2)
+		fmt.Fprintln(stderr, "错误：至少指定一个 -type")
+		fs.Usage()
+		return 2
 	}
 
 	// 1. 用 gengo 加载当前目录 package 并建立类型 universe。
 	p := gengoparser.New()
 	if err := p.LoadPackages("."); err != nil {
-		fmt.Fprintf(os.Stderr, "错误：加载当前 package 失败: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "错误：加载当前 package 失败: %v\n", err)
+		return 1
 	}
 	u, err := p.NewUniverse()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "错误：解析类型失败: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "错误：解析类型失败: %v\n", err)
+		return 1
 	}
 	requested := p.UserRequestedPackages()
 	if len(requested) != 1 {
-		fmt.Fprintf(os.Stderr, "错误：期望加载 1 个 package，实际 %d 个: %v\n", len(requested), requested)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "错误：期望加载 1 个 package，实际 %d 个: %v\n", len(requested), requested)
+		return 1
 	}
 	pkg := u[requested[0]]
 	if pkg == nil {
-		fmt.Fprintf(os.Stderr, "错误：package %q 未在 universe 中找到\n", requested[0])
-		os.Exit(1)
+		fmt.Fprintf(stderr, "错误：package %q 未在 universe 中找到\n", requested[0])
+		return 1
 	}
 
 	// 2. 逐个类型解析规则 IR，解析失败即整体失败（不写输出文件）。
@@ -74,13 +85,13 @@ func main() {
 	for _, name := range typeNames {
 		t := pkg.Types[name]
 		if t == nil {
-			fmt.Fprintf(os.Stderr, "错误：类型 %q 不存在于 package %q\n", name, requested[0])
-			os.Exit(1)
+			fmt.Fprintf(stderr, "错误：类型 %q 不存在于 package %q\n", name, requested[0])
+			return 1
 		}
 		tr, err := parser.ParseType(requested[0], t)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "错误：%v\n", err)
-			os.Exit(1)
+			fmt.Fprintf(stderr, "错误：%v\n", err)
+			return 1
 		}
 		typeRules = append(typeRules, tr)
 	}
@@ -88,12 +99,13 @@ func main() {
 	// 3. 生成并写入。
 	src, err := gen.Generate(gen.Options{PackageName: pkg.Name, Types: typeRules})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "错误：%v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "错误：%v\n", err)
+		return 1
 	}
 	if err := gen.WriteFile(*output, src); err != nil {
-		fmt.Fprintf(os.Stderr, "错误：%v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "错误：%v\n", err)
+		return 1
 	}
-	fmt.Printf("已生成 %s（类型：%s）\n", *output, strings.Join(typeNames, ", "))
+	fmt.Fprintf(stdout, "已生成 %s（类型：%s）\n", *output, strings.Join(typeNames, ", "))
+	return 0
 }
