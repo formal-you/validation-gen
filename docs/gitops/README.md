@@ -93,7 +93,7 @@ git push origin v0.1.0
 
 - PR 001-003：本地闭环合并并推送（当时 Issue/PR 仅记录在本地 docs，远程无记录）；
 - **自 004 起**：按本文档执行，GitHub Issue/PR 为远程权威记录；
-- 已落地：Issue #1（004 GitOps 工作流落地）与 PR #1 已创建并在 GitHub 合并到远程 `main`；
+- 已落地：Issue #1 与 PR #2（004 GitOps 工作流落地）已创建并在 GitHub 合并到远程 `main`；
 - 已就位：GitHub Actions CI（`.github/workflows/ci.yml`）自动执行验收门禁，
   开源配套文档（CONTRIBUTING / CODE_OF_CONDUCT / SECURITY / CHANGELOG）已入库；
 - 待办：按需打 tag 发布（见 §5）。
