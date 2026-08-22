@@ -67,3 +67,19 @@ jobs:
             echo "::error::main 存在 merge commit，违反线性规范，请改用 gh pr merge --rebase"
             exit 1
           fi
+
+  # 分支命名规范：<type>/<NNN>-<kebab-slug>（docs/gitops/README.md §1）。
+  branch-name:
+    name: Branch name follows convention
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check branch name
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if ! [[ "${HEAD_REF}" =~ ^(feat|fix|refactor|docs|test|chore)/[0-9]+(-[a-z0-9]+)+$ ]]; then
+            echo "::error::分支名 '${HEAD_REF}' 不符合规范 <type>/<NNN>-<kebab-slug>（type ∈ feat/fix/refactor/docs/test/chore，NNN 为 issue 编号）"
+            exit 1
+          fi
+          echo "分支名符合规范: ${HEAD_REF}"

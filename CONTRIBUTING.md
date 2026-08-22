@@ -28,7 +28,7 @@ git diff --check    # 无空白错误
 ```text
 1. 建 Issue      gh issue create（背景 / 需求 / 验收）
 2. 建 Goal       在 Issue 中写 DoD，或 docs/goal/NNN-<标题>.md 镜像
-3. 开 PR 分支    git checkout -b fix/NNN-<标题>（或 feat:/refactor:/docs:）
+3. 开 PR 分支    git checkout -b <type>/<NNN>-<slug>（分支命名规范见 docs/gitops/README.md §1）
 4. 实现 + 测试   按验收门禁全绿
 5. 推送分支      git push -u origin fix/NNN-<标题>
 6. 开 PR         gh pr create --base main --head fix/NNN-<标题>，正文写 Closes #<issue>
@@ -47,6 +47,8 @@ git diff --check    # 无空白错误
   按 `json > form > query > header > uri > param` 优先级解析；
 - **注释**：导出 API 与非显然的边界（生成期报错、nil/零值语义、default 幂等）用简洁中文注释；
 - **提交信息**：conventional 前缀（`feat:` / `fix:` / `refactor:` / `docs:` / `test:`），正文可用中文。
+- **分支命名**：`<type>/<NNN>-<kebab-slug>`（type ∈ `feat`/`fix`/`refactor`/`docs`/`test`/`chore`，
+  NNN 为关联 Issue 编号），CI 的 `branch-name` 作业在 PR 时强制校验。
 
 ## 建议的贡献方向
 

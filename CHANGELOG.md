@@ -23,6 +23,8 @@
 - 公共错误包 `valerr` 重命名为 `errorx`（避免与局部变量 `err` 冲突）。
 - `main` 历史重写为线性：移除 PR 001-004 的 merge commit（内容不变），
   此后合并一律 `gh pr merge --rebase` / `--squash`，禁止 merge commit（PR 004）。
+- 分支命名规范：`<type>/<NNN>-<kebab-slug>`，CI（`branch-name` 作业）强制校验；
+  `AGENTS.md` 增加开发工作流文档跳转（PR 005）。
 
 ### Fixed
 
