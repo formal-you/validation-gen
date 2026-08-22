@@ -128,20 +128,18 @@ go test ./...
 ```go
 package dto
 
-//go:generate go run ../../cmd/valgen -type=CreateUserRequest -type=Order
+//go:generate go run ../../cmd/valgen -type=Settings -output=zz_generated.validation.go
 
-type Order struct {
-    ID       int64  `json:"id" validate:"required,gt=0"`
-    Code     string `json:"code,omitempty" validate:"omitempty,oneof=express normal"`
-    Quantity uint   `json:"quantity,omitempty" validate:"omitempty,gt=0,lte=100"`
-    Note     string `json:"note,omitempty" validate:"omitempty,max=50"`
+type Settings struct {
+    Role string `json:"role" validate:"required" default:"guest"`
+    Page int    `json:"page,omitempty" validate:"omitempty,gte=1" default:"1"`
 }
 ```
 
 ### 3️⃣ 接入 handler
 
 ```go
-var req dto.CreateUserRequest
+var req dto.Settings
 if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
     http.Error(w, "bad request", http.StatusBadRequest)
     return
@@ -152,6 +150,7 @@ if err := req.Validate(); err != nil {
     return
 }
 ```
+> 只有声明了 `default` 字段的 DTO 才有 `FillDefaults()`；无 default 字段的 DTO 直接调用 `Validate()`。
 
 完整可运行示例见 [`example/http`](example/http/)、[`example/grpc`](example/grpc/)。
 
@@ -312,7 +311,7 @@ func CollectFieldErrors(err error) []FieldError
 DTO (validate/default tag)
   → go generate (cmd/valgen + gengo 解析)
   → zz_generated.validation.go（Validate / FillDefaults，无反射）
-  → HTTP: bind → FillDefaults → Validate → 400 结构化错误
+  → HTTP: bind → (FillDefaults) → Validate → 400 结构化错误
   → gRPC: request → Validate → status.Error(codes.InvalidArgument, ...)
   → 需要完整能力 → runtime.Validate(ctx, v, req)（validator/v10）
 ```

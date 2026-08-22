@@ -1,6 +1,8 @@
 // Package httpexample 演示 HTTP request 校验集成：
 //
-//	JSON bind -> FillDefaults -> Validate -> 400 结构化错误
+//	JSON bind -> (FillDefaults) -> Validate -> 400 结构化错误
+//
+// 只有声明了 default 字段的 DTO 才有 FillDefaults()；无 default 的 DTO 直接 Validate。
 //
 // 使用标准库 net/http，避免引入额外框架；中间件封装留待调用方按需扩展。
 package httpexample
@@ -16,15 +18,14 @@ import (
 
 // CreateUserHandler 处理 POST /users。
 //
-// 流程：解析 JSON -> FillDefaults -> Validate；校验失败返回
-// 400 + {"errors":[{"field":"name","code":"required"},...]}。
+// 流程：解析 JSON -> Validate（CreateUserRequest 无 default 字段，无需 FillDefaults）；
+// 校验失败返回 400 + {"errors":[{"field":"name","code":"required"},...]}。
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, http.StatusText(http.StatusBadRequest))
 		return
 	}
-	req.FillDefaults()
 	if err := req.Validate(); err != nil {
 		writeFieldErrors(w, http.StatusBadRequest, errorx.CollectFieldErrors(err))
 		return
