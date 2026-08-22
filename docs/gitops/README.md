@@ -57,7 +57,7 @@ git diff --check    # 无空白错误
 
 前置条件：
 
-1. 远程仓库已建立（如 https://github.com/formal-you/validation-gen.git，空仓库即可）；
+1. 远程仓库已建立（如 https://github.com/formal-you/validation-gen.git）；
 2. 本机凭据可用（**有仓库权限的 HTTPS PAT** 或 **已注册到 GitHub 的 SSH key**，二选一）。
 
 ```bash
@@ -72,6 +72,10 @@ git push -u origin main
 ```
 
 推送成功后，后续提交只需 `git push`（main 已绑定 origin/main）。
+
+> 若远程**已经有代码**（例如已从其他机器推送过）：先 `git fetch origin` 确认本地与远程的关系。
+> 本地领先（fast-forward 可推）时直接 `git push` 即可；本地落后时先 `git pull --rebase` 再推；
+> 若两边历史不相关（如远程有 GitHub UI 初始提交），先对齐历史（`git merge --allow-unrelated-histories` 或 rebase）再推送。
 
 ### 4.1 凭据问题排查（本次实测遇到）
 
@@ -103,5 +107,6 @@ git push origin v0.1.0
 
 - 已合并：PR 001（静态校验生成器）、PR 002（HTTP 绑定示例与 README 增强）；
 - 已就位：`origin` 已添加、本地分支已重命名为 `main`（`git branch -M main`）；
-- **待办**：凭据就绪后执行 `git push -u origin main`（见 §4.1）；
+- **已推送**：远程 `main` 已存在（`0e74624`，含 valerr→errorx 重构）；
+- **待同步**：本地 `main` 领先 1 个提交（`a4370e4`，gitOps 文档），执行 `git push -u origin main` 同步；
 - 未跟踪：`AGENTS.md`、`docs/review/2026-08-22-代码评审报告.md`（评审建议尽快提交 AGENTS.md）。
