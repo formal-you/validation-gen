@@ -12,7 +12,7 @@
 1. 建 Issue      gh issue create（或 GitHub 网页）  远程 Issue：背景 / 需求 / 验收（权威记录）
                  （可选）镜像 docs/issue/NNN-<标题>.md
 2. 建 Goal       在 Issue 中写目标 / 范围 / DoD，或镜像 docs/goal/NNN-<标题>.md
-3. 开 PR 分支    git checkout -b feat/NNN-<标题>（或 fix:/refactor:/docs:）
+3. 开 PR 分支    git checkout -b <type>/<NNN>-<slug>（见下方分支命名规范）
 4. 实现 + 测试   按「验收门禁」全绿（golden 测试强制生成文件与提交版一致）
 5. 推送分支      git push -u origin feat/NNN-<标题>
 6. 开 PR         gh pr create --base main --head feat/NNN-<标题>  远程 PR：摘要 / 变更清单 / 评审
@@ -28,7 +28,11 @@
 - **`main` 保持线性**：合并一律用 `gh pr merge --rebase`（保留每个提交）或 `--squash`（合并为单个提交），
   **禁止 `--no-ff` / `--merge` 产生 merge commit**；CI 会校验 `main` 无 merge commit；
 - 合并发生在 **GitHub**（`gh pr merge`），不是本地 `git merge`；本地随时 `git pull` 保持同步；
-- 分支名与提交信息用 conventional 前缀：`feat:` / `fix:` / `refactor:` / `docs:` / `test:`；
+- **分支命名规范**：`<type>/<NNN>-<kebab-slug>` —— `type` ∈
+  `feat` / `fix` / `refactor` / `docs` / `test` / `chore`（conventional 前缀），
+  `NNN` 为关联 Issue 的本地编号，`kebab-slug` 为小写英文短标题；CI 的 `branch-name`
+  作业会在 PR 时强制校验，例如 `feat/002-http-binding-examples`、`fix/003-review-fixes`；
+- 提交信息用 conventional 前缀：`feat:` / `fix:` / `refactor:` / `docs:` / `test:`；
 - 生成文件（`zz_generated.validation.go`）是派生产物，必须与 DTO 声明**同一 commit** 提交，
   否则 `TestGoldenExampleDTO` 会失败；
 - PR 正文写 `Closes #<issue>` 可在合并时自动关闭关联 Issue。
