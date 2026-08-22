@@ -4,7 +4,11 @@
 // 生成代码只依赖 valerr 与纯校验 helper（pkg/check），不依赖反射。
 package valerr
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+	"strings"
+)
 
 // FieldError 表示单个字段的单个校验失败。
 //
@@ -55,4 +59,34 @@ func collect(err error, out *[]FieldError) {
 	if fe, ok := err.(*FieldError); ok {
 		*out = append(*out, *fe)
 	}
+}
+
+// fieldNameTagPriority 是解析对外字段路径时依次尝试的绑定 tag，
+// 覆盖 JSON/form/query/header/URI 等常见 HTTP 绑定来源。
+var fieldNameTagPriority = []string{"json", "form", "query", "header", "uri", "param"}
+
+// FieldName 解析字段对外使用的名称（错误路径）。
+//
+// 优先级：json > form > query > header > uri > param > Go 字段名；
+// tag 值取 name 部分（逗号前的部分），形如 `json:",omitempty"`（无 name）时
+// 回退到下一优先级；`json:"-"` 返回 "-" 表示该字段不对外。
+//
+// 静态生成（pkg/parser）与 runtime adapter（pkg/runtime）共用该函数，
+// 保证错误路径一致。
+func FieldName(tags reflect.StructTag, goName string) string {
+	for _, key := range fieldNameTagPriority {
+		raw, ok := tags.Lookup(key)
+		if !ok || raw == "" {
+			continue
+		}
+		name := raw
+		if i := strings.IndexByte(raw, ','); i >= 0 {
+			name = raw[:i]
+		}
+		if name == "" {
+			continue
+		}
+		return name
+	}
+	return goName
 }

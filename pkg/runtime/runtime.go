@@ -138,18 +138,8 @@ func splitIndex(seg string) (name string, idx int, hasIdx bool, key string, hasK
 	return name, 0, false, inner, true
 }
 
-// jsonFieldName 返回结构体字段的 JSON 名称（json tag 的 name 部分），
-// 无 tag 或 tag 无 name 时使用 Go 字段名。
+// jsonFieldName 返回结构体字段的对外名称（错误路径）。
+// 与静态生成共用 valerr.FieldName：json > form > query > header > uri > param > Go 字段名。
 func jsonFieldName(sf reflect.StructField) string {
-	tag := sf.Tag.Get("json")
-	if tag == "" {
-		return sf.Name
-	}
-	if i := strings.IndexByte(tag, ','); i >= 0 {
-		tag = tag[:i]
-	}
-	if tag == "" {
-		return sf.Name
-	}
-	return tag
+	return valerr.FieldName(sf.Tag, sf.Name)
 }
