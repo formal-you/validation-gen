@@ -321,6 +321,57 @@ DTO (validate/default tag)
 
 ---
 
+## ⚡ 性能对比：生成代码 vs validator/v10
+
+> 结论先行：**哪怕 validator/v10 用 map 缓存了解析后的反射对象、并在首次校验时构建好校验函数，
+> 代码生成依旧更快、分配更少、更好阅读和修改。**
+
+### 基准结果（2026-08-22 · Go 1.26.1 / linux amd64 / Intel i7-14700K）
+
+同一 DTO、同一输入，`go test -bench . -benchmem ./example/dto/`：
+
+| 场景 | 生成代码 `Validate()` | validator 预热实例 | `runtime.Validate`（每次新建实例） |
+| --- | --- | --- | --- |
+| CreateUserRequest 合法 | 815 ns/op（80 B，5 allocs） | 1,612 ns/op（97 B，6 allocs） | 25,306 ns/op（20,595 B，251 allocs） |
+| CreateUserRequest 非法（多字段错误） | 835 ns/op（584 B，17 allocs） | 2,131 ns/op（1,313 B，29 allocs） | 29,022 ns/op（22,252 B，293 allocs） |
+| Settings 合法（纯标量） | 15 ns/op（0 B，0 allocs） | 431 ns/op（0 B，0 allocs） | — |
+
+三条路径的含义：
+
+- **生成代码**：无反射、无缓存查找，规则直接编译为普通 Go 分支；
+- **validator 预热实例**：复用已预热（map 缓存 + 已构建校验函数）的实例，是 validator 的最优形态
+  ——生成代码仍快约 **2–30 倍**，失败（多错误）场景分配也更少；
+- **`runtime.Validate(ctx, nil, v)`**：每次调用新建 validator 实例 + JSON 字段路径反射映射，
+  是文档化的显式扩展入口，性能代价最大。
+
+### 为什么代码生成依旧更快
+
+validator/v10 的优化是「解析一次、缓存复用」：首次校验用反射解析 struct 并缓存到 map、
+构建好字段校验函数，后续调用不再重复解析。但**每次校验调用仍然要**：
+
+- 反射遍历字段、读取 struct tag、做类型断言；
+- 查缓存、按字段逐个分发到校验函数；
+- 失败时构造 `ValidationErrors` 等中间对象。
+
+生成代码把这些全部消除在编译期：
+
+- **零反射**：直接读写字段，编译期类型检查；
+- **零缓存查找**：规则就是顺序执行的分支，`required → min → max` 一目了然；
+- **零中间对象**：合法路径直接返回 `nil`，失败才构造 `FieldError`；
+- **更好阅读/修改**：`Validate()` 是平铺可审查的 Go 代码，规则、字段名、失败 code 全部可见；
+  validator 的规则藏在 tag + 反射里，运行时才暴露行为，排查时要跟栈进反射层。
+
+### 什么时候用 runtime
+
+静态白名单覆盖不了 `dive`、跨字段、自定义 validator 等时，再显式走
+`runtime.Validate(ctx, v, req)`（传入复用实例可减少每次新建的开销）。
+两条路径错误模型一致，`errorx.CollectFieldErrors` 都可还原。
+
+> 基准数字与机器、Go 版本相关，本文仅作量级参考；重新测量请运行
+> `go test -bench . -benchmem ./example/dto/`。
+
+---
+
 ## 📦 仓库里有什么
 
 ```text
